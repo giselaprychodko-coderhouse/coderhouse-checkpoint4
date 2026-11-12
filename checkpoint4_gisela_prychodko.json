@@ -1,0 +1,1231 @@
+{
+  "name": "checkpoint4 - Integraciones.",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Respondé este correo de soporte.\n\nREMITENTE: {{ $('Gmail Trigger').item.json.From }}\nASUNTO: {{ $('Gmail Trigger').item.json.Subject }}\nMENSAJE: {{ $('Gmail Trigger').item.json.snippet }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You ## ROL\nSos el agente de soporte de la mesa de ayuda de una empresa SaaS B2B.\n\n## OBJETIVO\nLeé el correo recibido y prepará una respuesta profesional que va a quedar guardada como BORRADOR en Gmail para que la revise una persona.\nTambién armá un resumen corto para el equipo de operaciones en Slack.\n\n## REGLAS\n1. No envíes mensajes directamente.\n2. No inventes información sobre cuentas, pagos ni funciones del producto.\n3. No confirmes reembolsos ni acciones que no hayan ocurrido.\n4. Redactá una respuesta breve, clara y profesional.\n5. draft_subject es el asunto para responder al cliente.\n6. draft_body es la respuesta completa.\n7. slack_summary resume el caso en una o dos frases.\n8. Si podés darte cuenta del nombre y el apellido del remitente, completá first_name y last_name. Si no, dejalos vacíos.\n\n## SALIDA\nRespondé solo con este formato:\n{\"draft_subject\": \"\", \"draft_body\": \"\", \"slack_summary\": \"\", \"first_name\": \"\", \"last_name\": \"\"}are a helpful assistant",
+          "maxIterations": 8
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        736,
+        240
+      ],
+      "id": "05607374-5c0e-458b-b827-df348075c0ae",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        672,
+        464
+      ],
+      "id": "5d521e00-23cd-406e-bcd2-130f11953822",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "97UdAXbA21P5mViZ",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"draft_subject\": \"Asunto de la respuesta\",\n  \"draft_body\": \"Texto completo de la respuesta\",\n  \"slack_summary\": \"Resumen corto para el equipo\",\n  \"first_name\": \"Nombre\",\n  \"last_name\": \"Apellido\"\n}"
+      },
+      "id": "0f532a3d-8bea-43a1-9baa-2af93c099417",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        880,
+        464
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1PLlNKjDj-a7l8yCTBvgWumnjkda_yIYplJdZMdQe9nA",
+          "mode": "list",
+          "cachedResultName": "Memoria_Agente_TP3",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PLlNKjDj-a7l8yCTBvgWumnjkda_yIYplJdZMdQe9nA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "MEMORIA",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PLlNKjDj-a7l8yCTBvgWumnjkda_yIYplJdZMdQe9nA/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "session_id",
+              "lookupValue": "={{ $('Gmail Trigger').item.json.From }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        240
+      ],
+      "id": "2f8218df-9876-4b58-a4a6-7d3aa5772798",
+      "name": "Buscar memoria por Session_ID",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eUnok5QNfPGFkyfU",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "0eb18df5-1ed2-4326-b63b-b1b9b6c03ce0",
+              "leftValue": "={{ !!$json.session_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        448,
+        240
+      ],
+      "id": "a2b68bce-dbfe-4715-9ce2-b71fd1fb1bbc",
+      "name": "¿Existe memoria?"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1PLlNKjDj-a7l8yCTBvgWumnjkda_yIYplJdZMdQe9nA",
+          "mode": "list",
+          "cachedResultName": "Memoria_Agente_TP3",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PLlNKjDj-a7l8yCTBvgWumnjkda_yIYplJdZMdQe9nA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "MEMORIA",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PLlNKjDj-a7l8yCTBvgWumnjkda_yIYplJdZMdQe9nA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "session_id": "={{ $('Gmail Trigger').item.json.From }}",
+            "user_name": "={{ $('Gmail Trigger').item.json.From }}",
+            "fecha_actualizacion": "={{ $now.toFormat('yyyy-MM-dd HH:mm') }}",
+            "estado_caso": "NUEVO",
+            "contador_mensajes": "0",
+            "mensajes_desde_resumen": "0"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "user_name",
+              "displayName": "user_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_actualizacion",
+              "displayName": "fecha_actualizacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "resumen_consolidado",
+              "displayName": "resumen_consolidado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estado_caso",
+              "displayName": "estado_caso",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "datos_clave",
+              "displayName": "datos_clave",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "contador_mensajes",
+              "displayName": "contador_mensajes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mensajes_desde_resumen",
+              "displayName": "mensajes_desde_resumen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "historial_pendiente",
+              "displayName": "historial_pendiente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        528,
+        640
+      ],
+      "id": "56acda37-0427-4bff-8b84-c5b5b00a6766",
+      "name": "Registrar usuario nuevo",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eUnok5QNfPGFkyfU",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1PLlNKjDj-a7l8yCTBvgWumnjkda_yIYplJdZMdQe9nA",
+          "mode": "list",
+          "cachedResultName": "Memoria_Agente_TP3",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PLlNKjDj-a7l8yCTBvgWumnjkda_yIYplJdZMdQe9nA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "MEMORIA",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PLlNKjDj-a7l8yCTBvgWumnjkda_yIYplJdZMdQe9nA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "session_id": "={{ $('Gmail Trigger').item.json.From }}",
+            "fecha_actualizacion": "={{ $now.toFormat('yyyy-MM-dd HH:mm') }}",
+            "contador_mensajes": "={{ Number($('Buscar memoria por Session_ID').item.json.contador_mensajes || 0) + 1 }}",
+            "mensajes_desde_resumen": "={{ Number($('Buscar memoria por Session_ID').item.json.mensajes_desde_resumen || 0) + 1 }}",
+            "historial_pendiente": "={{ ($('Buscar memoria por Session_ID').item.json.historial_pendiente || '') + ' | Cliente: ' + $('Gmail Trigger').item.json.snippet }}"
+          },
+          "matchingColumns": [
+            "session_id"
+          ],
+          "schema": [
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "user_name",
+              "displayName": "user_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fecha_actualizacion",
+              "displayName": "fecha_actualizacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "resumen_consolidado",
+              "displayName": "resumen_consolidado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "estado_caso",
+              "displayName": "estado_caso",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "datos_clave",
+              "displayName": "datos_clave",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "contador_mensajes",
+              "displayName": "contador_mensajes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "mensajes_desde_resumen",
+              "displayName": "mensajes_desde_resumen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "historial_pendiente",
+              "displayName": "historial_pendiente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1152,
+        256
+      ],
+      "id": "3cc288c7-3e37-43bf-b5f0-28840b4888ca",
+      "name": "Actualizar memoria",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eUnok5QNfPGFkyfU",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "aaa5cd5b-7b29-4143-9c8b-e3f8b1721cf9",
+              "leftValue": "={{ $json.mensajes_desde_resumen }}",
+              "rightValue": 5,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1456,
+        256
+      ],
+      "id": "a5db2217-0578-40e7-8e59-f4240f1841f1",
+      "name": "Más de 5 mensajes"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        1696,
+        400
+      ],
+      "id": "41ed9235-72c3-400b-9dda-28c52c39a037",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "97UdAXbA21P5mViZ",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Sos un asistente que resume conversaciones de soporte. Respondé SOLO con un JSON válido, sin texto antes ni después, con este formato exacto:\n{\"asunto_principal\": \"string\", \"puntos_clave\": [\"string\"], \"accion_requerida\": \"string\"}\nNo inventes datos. No copies la conversación completa.\n\nConversación a resumir:\n{{ $('Buscar memoria por Session_ID').item.json.historial_pendiente }} | Cliente:$('Gmail Trigger').item.json.snippet }",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1696,
+        160
+      ],
+      "id": "aee0b829-f77b-43ac-8cc5-96a33dabd04c",
+      "name": "Resumir conversación"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1PLlNKjDj-a7l8yCTBvgWumnjkda_yIYplJdZMdQe9nA",
+          "mode": "list",
+          "cachedResultName": "Memoria_Agente_TP3",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PLlNKjDj-a7l8yCTBvgWumnjkda_yIYplJdZMdQe9nA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "MEMORIA",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1PLlNKjDj-a7l8yCTBvgWumnjkda_yIYplJdZMdQe9nA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "session_id": "={{ $('Gmail Trigger').item.json.From }}",
+            "resumen_consolidado": "={{ $json.text }}",
+            "estado_caso": "EN_CURSO",
+            "mensajes_desde_resumen": "0",
+            "historial_pendiente": "={{ ' ' }}"
+          },
+          "matchingColumns": [
+            "session_id"
+          ],
+          "schema": [
+            {
+              "id": "session_id",
+              "displayName": "session_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "user_name",
+              "displayName": "user_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fecha_actualizacion",
+              "displayName": "fecha_actualizacion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "resumen_consolidado",
+              "displayName": "resumen_consolidado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "estado_caso",
+              "displayName": "estado_caso",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "datos_clave",
+              "displayName": "datos_clave",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "contador_mensajes",
+              "displayName": "contador_mensajes",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "mensajes_desde_resumen",
+              "displayName": "mensajes_desde_resumen",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "historial_pendiente",
+              "displayName": "historial_pendiente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2064,
+        160
+      ],
+      "id": "dd87c014-240d-4efa-bf50-f61605cda001",
+      "name": "Guardar resumen",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "eUnok5QNfPGFkyfU",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "filters": {}
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "241b6dbf-e5d1-4d41-beca-ce9db3fa3862",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "dZ30Mq4cW4mgVtcU",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "1b90e177-ab42-4d70-acf4-c5ea97afa37b",
+              "leftValue": "={{ $json.Subject }}",
+              "rightValue": "Auto-reply",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "b84addf4-54f8-4db6-a33b-35c6783fe002",
+              "leftValue": "={{ $json.Subject }}",
+              "rightValue": "Out of office",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "735c77ae-bf39-4d2a-8456-967d682a38db",
+              "leftValue": "={{ $json.Subject }}",
+              "rightValue": "Undeliverable",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            },
+            {
+              "id": "d738da91-97d7-4712-b1d6-fe55dbba072c",
+              "leftValue": "={{ $json.From }}",
+              "rightValue": "no-reply",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {
+          "ignoreCase": true
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "c6c21b2c-df49-4b42-8d66-b34d17cbff1b",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c3f8f5cf-69c5-42ee-925b-6094f0746018",
+              "name": "email",
+              "value": "={{ $('Gmail Trigger').item.json.From.match(/<(.+)>/)?.[1] ?? $('Gmail Trigger').item.json.From }}",
+              "type": "string"
+            },
+            {
+              "id": "8047bb0b-e422-4b48-a27b-3a8f59bf40f6",
+              "name": "asunto",
+              "value": "={{ $('Gmail Trigger').item.json.Subject }}",
+              "type": "string"
+            },
+            {
+              "id": "c63052d1-574b-48d6-a990-a4edfcb67db6",
+              "name": "mensaje",
+              "value": "={{ $('Gmail Trigger').item.json.snippet }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1040,
+        432
+      ],
+      "id": "434d3ba9-b1f0-45ed-92b7-eae1c9f78773",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "39995776-8c7c-428c-9b6b-8dad437a8671",
+              "leftValue": "={{ $json.email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.4,
+      "position": [
+        1264,
+        432
+      ],
+      "id": "ddec6677-c466-4bd6-9476-7704320c494d",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "operation": "search",
+        "filterGroupsUi": {
+          "filterGroupsValues": [
+            {
+              "filtersUi": {
+                "filterValues": [
+                  {
+                    "propertyName": "email|string",
+                    "value": "={{ $('Edit Fields').item.json.email }}"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        1504,
+        624
+      ],
+      "id": "3c06a310-a2c9-4e19-884d-1e3d5e73054f",
+      "name": "Search contacts",
+      "alwaysOutputData": true,
+      "credentials": {
+        "hubspotOAuth2Api": {
+          "id": "iBlk92BJfOLtpvbi",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "b3779923-6b31-4c94-8e56-919b42072e4f",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1728,
+        624
+      ],
+      "id": "73ba37eb-857e-488c-992e-d3f7c8039004",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "email": "={{ $('Edit Fields').item.json.email }}\n",
+        "additionalFields": {
+          "firstName": "={{ $('AI Agent').item.json.output.first_name }}",
+          "lastName": "={{ $('AI Agent').item.json.output.last_name }}"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        1952,
+        528
+      ],
+      "id": "b8872809-ab3e-4c83-b3a3-97dc2eab6b6a",
+      "name": "Actualizar contacto",
+      "credentials": {
+        "hubspotOAuth2Api": {
+          "id": "iBlk92BJfOLtpvbi",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "email": "={{ $('Edit Fields').item.json.email }}\n",
+        "additionalFields": {
+          "firstName": "={{ $('AI Agent').item.json.output.first_name }}",
+          "lastName": "={{ $('AI Agent').item.json.output.last_name }}"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [
+        1920,
+        736
+      ],
+      "id": "0d23d009-87a8-402f-b958-c55e8117e553",
+      "name": "Crear contacto",
+      "credentials": {
+        "hubspotOAuth2Api": {
+          "id": "iBlk92BJfOLtpvbi",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "draft",
+        "subject": "={{ $('AI Agent').item.json.output.draft_subject }}",
+        "message": "={{ $('AI Agent').item.json.output.draft_body }}",
+        "options": {
+          "sendTo": "={{ $('Edit Fields').item.json.email }}"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1248,
+        768
+      ],
+      "id": "10c4e1a6-da99-4c1a-bebf-4cc6c92c5f7a",
+      "name": "Create a draft",
+      "webhookId": "b2e5b5de-2a01-4c40-9363-1e2f80224a47",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "dZ30Mq4cW4mgVtcU",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e0c8429d-5516-40ad-94a2-8669a774e580",
+              "name": "remitente",
+              "value": "={{ $('Edit Fields').item.json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "2466fda9-c28b-445d-add6-c6e79c44f614",
+              "name": "asunto",
+              "value": "={{ $('Edit Fields').item.json.asunto }}",
+              "type": "string"
+            },
+            {
+              "id": "b2780e02-7790-45fc-9305-8a2224d6500e",
+              "name": "resumen",
+              "value": "={{ $('AI Agent').item.json.output.slack_summary }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1568,
+        864
+      ],
+      "id": "ec2cfbc9-db6b-411f-a7f9-2da2c578eee1",
+      "name": "limpieza para Slack"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0CAKRE45JR",
+          "mode": "list",
+          "cachedResultName": "operaciones-coder-tp4"
+        },
+        "text": "=Nuevo correo de soporte Remitente: {{ $json.remitente }} Asunto: {{ $json.asunto }} Resumen: {{ $json.resumen }}",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        1792,
+        864
+      ],
+      "id": "af42168e-e948-4846-b71c-e884f5968f5f",
+      "name": "Send a message",
+      "webhookId": "654808c5-ec57-49ec-8cca-d8f381e11e2c",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "Hb2bJ31UKzZCsd1e",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar memoria por Session_ID": {
+      "main": [
+        [
+          {
+            "node": "¿Existe memoria?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Existe memoria?": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Registrar usuario nuevo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar usuario nuevo": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar memoria": {
+      "main": [
+        [
+          {
+            "node": "Más de 5 mensajes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Más de 5 mensajes": {
+      "main": [
+        [
+          {
+            "node": "Resumir conversación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Resumir conversación",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resumir conversación": {
+      "main": [
+        [
+          {
+            "node": "Guardar resumen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Buscar memoria por Session_ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Search contacts",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create a draft",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "limpieza para Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search contacts": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Actualizar contacto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Crear contacto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "limpieza para Slack": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a draft": {
+      "main": [
+        [
+          {
+            "node": "Actualizar memoria",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true,
+    "timezone": "America/Argentina/Buenos_Aires"
+  },
+  "versionId": "61358cea-4966-4e57-8b3d-01ad108689f4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "aiBuilderAssisted": true,
+    "builderVariant": "mcp",
+    "instanceId": "6d338406efdb8c2d3587fe8628c38743a590ae0ff34e3b9b7443b0e05251f9b5"
+  },
+  "nodeGroups": [],
+  "id": "3TXQZ6Mbt8drMG3O",
+  "tags": []
+}
